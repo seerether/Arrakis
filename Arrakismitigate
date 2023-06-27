@@ -1,0 +1,17 @@
+function withdrawAndCollectFees(
+    IArrakisV2[] calldata vaults_,
+    IERC20[] calldata tokens_,
+    address target
+) external onlyOwner requireAddressNotZero(target) {
+    uint256 vaultsLength = vaults_.length;
+
+    // Perform type check for each vault
+    for (uint256 i = 0; i < vaultsLength; i++) {
+        require(
+            vaults_[i] instanceof IArrakisV2,
+            "Vault is not an instance of IArrakisV2"
+        );
+    }
+
+    // Rest of the function implementation...
+}
