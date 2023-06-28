@@ -1,0 +1,40 @@
+modifier ensureETHTransferSafe(uint256 amount0, uint256 amount1, bool isToken0Weth) {
+    if (isToken0Weth && msg.value > amount0) {
+        require(
+            msg.value == amount0 + (amount1 * 1e18 / getAmountOut(amount0, amount1)),
+            "Incorrect ETH value"
+        );
+    } else if (!isToken0Weth && msg.value > amount1) {
+        require(
+            msg.value == amount1 + (amount0 * 1e18 / getAmountOut(amount1, amount0)),
+            "Incorrect ETH value"
+        );
+    } else {
+        require(msg.value == 0, "Excess ETH sent");
+    }
+    _;
+}
+
+// Modify the swapAndAddLiquidity function to use the ensureETHTransferSafe modifier and include the necessary checks:
+
+
+function swapAndAddLiquidity(SwapAndAddData memory params_)
+    external
+    payable
+    whenNotPaused
+    nonReentrant
+    ensureETHTransferSafe(params_.addData.amount0Max, params_.addData.amount1Max, isToken0Weth)
+    returns (
+        uint256 amount0,
+        uint256 amount1,
+        uint256 sharesReceived,
+        uint256 amount0Diff,
+        uint256 amount1Diff
+    )
+{
+    // Existing code
+
+    // Ether transfer handling removed
+
+    // Existing code
+}
