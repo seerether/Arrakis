@@ -11,19 +11,19 @@ function swapAndAddLiquidity(SwapAndAddData memory params_)
         uint256 amount1Diff
     )
 {
-    // Checks
     require(
         params_.addData.amount0Max > 0 || params_.addData.amount1Max > 0,
         "Empty max amounts"
     );
     if (params_.addData.gauge != address(0)) {
         require(
-            params_.addData.vault == IGauge(params_.addData.gauge).staking_token(),
+            params_.addData.vault ==
+                IGauge(params_.addData.gauge).staking_token(),
             "Incorrect gauge!"
         );
     }
 
-    // Effects
+    // Checks
     IERC20 token0 = IArrakisV2(params_.addData.vault).token0();
     IERC20 token1 = IArrakisV2(params_.addData.vault).token1();
 
@@ -38,14 +38,23 @@ function swapAndAddLiquidity(SwapAndAddData memory params_)
         );
     }
 
-    if (params_.addData.amount0Max > 0 && (msg.value == 0 || !isToken0Weth)) {
+    // Effects
+    uint256 preTransferBalance0 = token0.balanceOf(address(this));
+    uint256 preTransferBalance1 = token1.balanceOf(address(this));
+
+    // Interactions
+    if (
+        params_.addData.amount0Max > 0 && (msg.value == 0 || !isToken0Weth)
+    ) {
         token0.safeTransferFrom(
             msg.sender,
             address(this),
             params_.addData.amount0Max
         );
     }
-    if (params_.addData.amount1Max > 0 && (msg.value == 0 || isToken0Weth)) {
+    if (
+        params_.addData.amount1Max > 0 && (msg.value == 0 || isToken0Weth)
+    ) {
         token1.safeTransferFrom(
             msg.sender,
             address(this),
@@ -53,9 +62,23 @@ function swapAndAddLiquidity(SwapAndAddData memory params_)
         );
     }
 
-    // Interactions (Moved after Effects)
+    // Update state variables or perform other critical operations
+
+    // Effects
+    amount0Diff = token0.balanceOf(address(this)) - preTransferBalance0;
+    amount1Diff = token1.balanceOf(address(this)) - preTransferBalance1;
+
+    // Perform additional state updates or critical operations
+
+    // Interactions
     (
         amount0,
+        amount1,
+        sharesReceived,
+        amount0Diff,
+        amount1Diff
+    ) = _swapAndAddLiquidity(params_, token0, token1);
+}
         amount1,
         sharesReceived,
         amount0Diff,
