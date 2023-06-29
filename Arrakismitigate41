@@ -1,0 +1,49 @@
+function addLiquidity(AddLiquidityData memory params_)
+    external
+    payable
+    whenNotPaused
+    nonReentrant
+    returns (
+        uint256 amount0,
+        uint256 amount1,
+        uint256 sharesReceived
+    )
+{
+    // ... (existing code)
+
+    IERC20 token0 = IArrakisV2(params_.vault).token0();
+    IERC20 token1 = IArrakisV2(params_.vault).token1();
+
+    bool isToken0Weth;
+    if (msg.value > 0) {
+        isToken0Weth = _wrapETH(amount0, amount1, false, token0, token1);
+    }
+
+    _addLiquidity(
+        params_.vault,
+        amount0,
+        amount1,
+        sharesReceived,
+        params_.gauge,
+        params_.receiver,
+        token0,
+        token1
+    );
+
+    if (amount0 > 0 && (msg.value == 0 || !isToken0Weth)) {
+        token0.safeTransferFrom(msg.sender, address(this), amount0);
+    }
+    if (amount1 > 0 && (msg.value == 0 || isToken0Weth)) {
+        token1.safeTransferFrom(msg.sender, address(this), amount1);
+    }
+
+    if (msg.value > 0) {
+        if (isToken0Weth && msg.value > amount0) {
+            payable(msg.sender).sendValue(msg.value - amount0);
+        } else if (!isToken0Weth && msg.value > amount1) {
+            payable(msg.sender).sendValue(msg.value - amount1);
+        }
+    }
+
+    // ... (existing code)
+}
